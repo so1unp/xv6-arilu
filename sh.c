@@ -74,13 +74,48 @@ runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit();
-    printf(2, "exec not implemented\n");
+    if (fork() == 0){
+	    exec(ecmd -> argv[0], ecmd -> argv);
+	    char* primerArg = ecmd ->argv[0];
+      printf(2, "Error: comando '%s' no encontrado.\n", primerArg);
+	    exit();
+    }
+    wait();
     break;
 
   case REDIR:
-    printf(2, "redir not implemented\n");
-    //rcmd = (struct redircmd*)cmd;
-    //runcmd(rcmd->cmd);
+    rcmd = (struct redircmd *)cmd;
+
+    // Verificar el tipo de redirección ('<' o '>')
+    if (rcmd->mode == O_RDONLY) {
+        int fd = open(rcmd->file, O_RDONLY);
+        if (fd < 0) {
+            printf(2, "Error al abrir archivo para redirección de entrada\n");
+            exit();
+        }
+        close(0); // Cerrar entrada estándar
+        if (dup(fd) != 0) {  // Duplicar fd en entrada estándar
+            printf(2, "Error al redirigir entrada estándar\n");
+            exit();
+        }
+        close(fd); // Cerrar el descriptor original
+    } else if (rcmd->mode == (O_WRONLY | O_CREATE)) {
+        unlink(rcmd->file); // Eliminar el archivo si existe (simula truncate)
+
+        int fd = open(rcmd->file, O_WRONLY | O_CREATE);
+        if (fd < 0) {
+            printf(2, "Error al abrir archivo para redirección de salida\n");
+            exit();
+        }
+        close(1); // Cerrar salida estándar
+        if (dup(fd) != 1) {  // Duplicar fd en salida estándar
+            printf(2, "Error al redirigir salida estándar\n");
+            exit();
+        }
+        close(fd); // Cerrar el descriptor original
+    }
+
+    runcmd(rcmd->cmd);
     break;
 
   case LIST:

@@ -74,13 +74,10 @@ runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit();
-    if (fork() == 0){
-	    exec(ecmd -> argv[0], ecmd -> argv);
-	    char* primerArg = ecmd ->argv[0];
-      printf(2, "Error: comando '%s' no encontrado.\n", primerArg);
-	    exit();
-    }
-    wait();
+	  exec(ecmd -> argv[0], ecmd -> argv);
+	  char* primerArg = ecmd ->argv[0];
+    printf(2, "Error: comando '%s' no encontrado.\n", primerArg);
+	  exit();
     break;
 
   case REDIR:
